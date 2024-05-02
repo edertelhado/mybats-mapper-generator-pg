@@ -18,6 +18,7 @@ import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.stream.StreamResult;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
+import org.w3c.dom.ProcessingInstruction;
 
 /**
  *
@@ -35,6 +36,11 @@ public class MyBatisMapperCreator {
         docFactory = DocumentBuilderFactory.newInstance();
         docBuilder = docFactory.newDocumentBuilder();
         doc = docBuilder.newDocument();
+        String doctypeDeclaration = "-//mybatis.org//DTD Mapper 3.0//EN";
+        String doctypeLocation = "http://mybatis.org/dtd/mybatis-3-mapper.dtd";
+        doc.appendChild(doc.createComment(" Generated using MyBatis Generator "));
+        ProcessingInstruction doctype = doc.createProcessingInstruction("DOCTYPE", "mapper PUBLIC \"" + doctypeDeclaration + "\" \"" + doctypeLocation + "\"");
+        doc.appendChild(doctype);
     }
 
     public void create(List<MapperField> fieldList, MapperOptions optionsMap) {
@@ -44,7 +50,8 @@ public class MyBatisMapperCreator {
 
             Element mapperElement = doc.createElement("mapper");
             mapperElement.setAttribute("namespace", options.getPackageFqn());
-             var primaryKey = fields.stream().filter((f) -> f.isPrimaryKey()).findFirst().orElse(null);
+
+            var primaryKey = fields.stream().filter((f) -> f.isPrimaryKey()).findFirst().orElse(null);
             doc.appendChild(mapperElement);
             if (optionsMap.isGenInsert()) {
                 String stm = genInsertStm();
@@ -57,23 +64,23 @@ public class MyBatisMapperCreator {
             }
             if (optionsMap.isGenDelete() && primaryKey != null) {
                 String stm = genDeletePkStm();
-                  mapperElement.appendChild(buildDelete(stm));
+                mapperElement.appendChild(buildDelete(stm));
             }
             if (optionsMap.isGenSelectAll()) {
                 String stm = genSelectStm();
-                  mapperElement.appendChild(buildFindAll(stm,optionsMap.getResultClassFqn()));
+                mapperElement.appendChild(buildFindAll(stm, optionsMap.getResultClassFqn()));
             }
             if (optionsMap.isGenSelectByPk() && primaryKey != null) {
                 String stm = genSelectPkStm();
-                mapperElement.appendChild(buildFindByPk(stm,optionsMap.getResultClassFqn()));
+                mapperElement.appendChild(buildFindByPk(stm, optionsMap.getResultClassFqn()));
             }
-     
+
             TransformerFactory transformerFactory = TransformerFactory.newInstance();
             Transformer transformer = transformerFactory.newTransformer();
             DOMSource source = new DOMSource(doc);
             String fqn = optionsMap.getPackageFqn();
             String[] packageDeclaration = fqn.split("\\.");
-            String fileName = packageDeclaration[packageDeclaration.length -1];
+            String fileName = packageDeclaration[packageDeclaration.length - 1];
             StreamResult result = new StreamResult(new File(optionsMap.getOutputDirectory(), fileName + ".xml"));
             transformer.setOutputProperty(OutputKeys.INDENT, "yes");
             transformer.setOutputProperty("{http://xml.apache.org/xslt}indent-amount", "2");
@@ -137,7 +144,7 @@ public class MyBatisMapperCreator {
         List<String> sentenceList = new ArrayList<>();
         for (MapperField field : fields) {
             if (field.isUpdatable() && !field.isPrimaryKey()) {
-                String sentence = String.format(" %s = #{%s.%s}", field.tableField(),options.getParamName(), field.classField());
+                String sentence = String.format(" %s = #{%s.%s}", field.tableField(), options.getParamName(), field.classField());
                 sentenceList.add(sentence);
             }
         }
@@ -153,7 +160,7 @@ public class MyBatisMapperCreator {
         List<String> classFields = new ArrayList<>();
         for (MapperField field : fields) {
             if (field.isInsertable() && !field.isPrimaryKey()) {
-                classFields.add(String.format(" #{%s.%s}", options.getParamName(),field.classField()));
+                classFields.add(String.format(" #{%s.%s}", options.getParamName(), field.classField()));
                 tableFields.add(field.tableField());
             }
         }
